@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="AvU8YFb7wlimKN7nwA1bUw">
+<head data-page-node-id="SUGUUSe6aYpQaEEcL2NvYH">
+<meta charset="UTF-8" data-page-node-id="PQBbIOTXrbz9HKGzTVCitD">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="X7GyvOq3Y1mhHqx6UEmenv">
+<title>云南滇东南环线 · 8天自驾路书</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" data-page-node-id="SHIS0tGnVnMW3xQBtbw17v" />
+<style>
+:root{
+  --bg:#f6f3ec; --surface:#ffffff; --ink:#2a2620; --muted:#7c7266; --line:#e7e0d3;
+  --brand:#2e7d5b; --brand-dark:#1f5c42; --accent:#e8590c; --amber:#f08c00;
+  --green:#12b886; --gray:#9aa0a6; --blue:#3355d4;
+  --shadow:0 10px 30px rgba(60,50,30,.10); --shadow-sm:0 4px 14px rgba(60,50,30,.08);
+  --radius:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* 顶部导航 */
+.topbar{position:sticky;top:0;z-index:900;background:rgba(246,243,236,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:16px;height:58px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;letter-spacing:.5px;white-space:nowrap}
+.logo .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+.daychips{margin-left:auto;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
+.daychips::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;transition:.18s;white-space:nowrap}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
+.chip.active{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* Hero */
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#173f2e 0%,#2e7d5b 55%,#c2620f 130%);color:#fff;padding:54px 0 46px}
+.hero::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.12) 1px,transparent 1px);background-size:26px 26px;opacity:.4;pointer-events:none}
+.hero .wrap{position:relative;z-index:1}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);padding:5px 14px;border-radius:999px;font-size:12.5px;letter-spacing:1px;margin-bottom:18px}
+.hero h1{font-size:clamp(28px,4.6vw,46px);font-weight:900;letter-spacing:1px;line-height:1.18}
+.hero .sub{margin-top:14px;font-size:15.5px;opacity:.93;max-width:720px}
+.route-strip{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:24px;font-size:13.5px}
+.route-strip .stop{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);padding:6px 13px;border-radius:999px;font-weight:600}
+.route-strip .stop.soft{opacity:.72}
+.route-strip .arr{opacity:.5}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:30px}
+.stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:16px 18px;backdrop-filter:blur(4px)}
+.stat .num{font-size:26px;font-weight:900;line-height:1}
+.stat .num small{font-size:13px;font-weight:600;margin-left:2px}
+.stat .lbl{font-size:12.5px;opacity:.85;margin-top:6px}
+
+/* 全程总览 */
+.overview{padding:38px 0 6px}
+.ov-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.ov-head{padding:16px 22px;border-bottom:1px solid var(--line)}
+.ov-head h2{font-size:18px;font-weight:800}
+.ov-head .hint{font-size:12.5px;color:var(--muted);margin-top:2px}
+#mapOverview{height:480px;width:100%;background:#e9e4d9}
+.legend{padding:11px 22px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:16px;font-size:12.5px;color:var(--muted)}
+.legend .item{display:flex;align-items:center;gap:6px}
+.legend .sw{width:18px;height:4px;border-radius:2px;display:inline-block}
+.legend .sw.dash{background:repeating-linear-gradient(90deg,#9aa0a6 0 5px,transparent 5px 9px)}
+
+/* 每日 */
+.days{padding:34px 0 70px}
+.days h2.sec{font-size:24px;font-weight:900;margin-bottom:4px}
+.days .lead{color:var(--muted);margin-bottom:30px;font-size:14px}
+.day-sec{margin-bottom:44px}
+.day-sec .day-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--line)}
+.day-sec .dhead{padding:22px 26px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.day-sec .dhead .left .date{font-size:12.5px;font-weight:800;color:var(--accent);letter-spacing:.5px}
+.day-sec .dhead .left h3{font-size:21px;font-weight:800;margin-top:3px}
+.day-sec .dhead .left .route-txt{margin-top:7px;color:var(--muted);font-size:13.5px}
+.day-sec .dhead .totals{display:flex;gap:8px;flex-wrap:wrap}
+.tot-badge{background:#f3efe6;border:1px solid var(--line);color:#5d5344;padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:700}
+.tot-badge b{color:var(--ink)}
+.tot-badge.drive{background:#fdf2e7;border-color:#f4d8bc;color:#b55a14}
+.tot-badge.sight{background:#eaf4ee;border-color:#cfe3d8;color:var(--brand-dark)}
+.tot-badge.shuttle{background:#f1f3f5;border-color:#dde2e6;color:#5c6570}
+.day-map{height:400px;width:100%;background:#e9e4d9}
+.day-sec .dbody{padding:20px 26px 26px}
+.stops{display:flex;flex-direction:column;gap:0;margin:4px 0 18px}
+.stop-row{display:flex;gap:12px;align-items:flex-start}
+.stop-row .dot{flex:0 0 26px;height:26px;border-radius:50%;color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.stop-row .info{flex:1;padding-bottom:2px}
+.stop-row .info .nm{font-weight:700;font-size:14.5px}
+.stop-row .info .desc{font-size:13px;color:var(--muted)}
+.stop-row .leg{flex:1;padding:2px 0 10px 38px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.stop-row .leg .sw{width:22px;height:3px;border-radius:2px}
+.stop-row .leg .sw.dash{background:repeating-linear-gradient(90deg,#9aa0a6 0 5px,transparent 5px 9px)}
+.stop-row .leg b{color:var(--ink);font-weight:700}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px}
+.badge{background:#f3efe6;border:1px solid var(--line);color:#5d5344;padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px}
+.badge b{color:var(--ink)}
+.badge.charge{background:#fdf2e7;border-color:#f4d8bc;color:#b55a14}
+.badge.time{background:#eaf4ee;border-color:#cfe3d8;color:var(--brand-dark)}
+.badge.eta{background:#eef1fb;border-color:#d5dcf5;color:var(--blue)}
+.items{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.item{display:flex;gap:12px;align-items:flex-start}
+.item .tm{flex:0 0 68px;font-weight:700;color:var(--brand-dark);font-size:13px;padding-top:2px}
+.item .ic{flex:0 0 18px;text-align:center;color:var(--accent);font-weight:800}
+.item .tx{font-size:14px}
+.item .tx small{color:var(--muted)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:18px}
+.photo{border-radius:14px;overflow:hidden;position:relative;box-shadow:var(--shadow-sm)}
+.photo img{width:100%;height:180px;object-fit:cover;transition:transform .5s}
+.photo:hover img{transform:scale(1.05)}
+.photo .cap{position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font-size:12.5px;font-weight:600}
+.stay{margin-top:18px;background:#faf7f0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.stay .stay-grid{display:grid;grid-template-columns:260px 1fr;gap:0}
+.stay .stay-photo img{width:100%;height:100%;object-fit:cover;min-height:180px}
+.stay .stay-info{padding:16px 20px}
+.stay .stay-info .tag{font-size:11.5px;font-weight:800;letter-spacing:1px;color:var(--accent)}
+.stay .stay-info h4{font-size:16.5px;font-weight:800;margin:4px 0 5px}
+.stay .stay-info .addr{font-size:13px;color:var(--muted)}
+.note{margin-top:16px;background:#fff8ec;border:1px solid #f4dfb8;border-left:4px solid var(--amber);border-radius:10px;padding:12px 16px;font-size:13px;color:#7a5a1e}
+.note b{color:#8a5a12}
+footer{padding:38px 0 60px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;text-align:center}
+footer .disc{margin-top:10px;max-width:780px;margin-left:auto;margin-right:auto;font-size:12px;opacity:.85}
+.pin{width:28px;height:28px;border-radius:50%;color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.32);border:2.5px solid #fff}
+.pin.big{width:32px;height:32px;font-size:13px}
+.pin.sq{border-radius:9px}
+.leaflet-popup-content-wrapper{border-radius:12px}
+.leaflet-popup-content{margin:10px 13px;font-size:13px;line-height:1.5}
+.leaflet-popup-content b{font-size:13.5px}
+@media(max-width:760px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stay .stay-grid{grid-template-columns:1fr}
+  .stay .stay-photo img{min-height:150px}
+  .day-map{height:320px}
+  #mapOverview{height:360px}
+  .topbar .wrap{height:auto;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
+  .daychips{width:100%;margin-left:0;order:3}
+}
+</style>
+</head>
+<body data-page-node-id="cGnJ4mzfKUhs8qtGdXpubK">
+
+<nav class="topbar" data-page-node-id="XSveomvvrKK48Hv5pr9uhD">
+  <div class="wrap" data-page-node-id="wTCdMt3ZE5F9OAePvURmo0">
+    <div class="logo" data-page-node-id="H89irs1cAB9fHD3wVSulLN"><span class="dot" data-page-node-id="SjUE189DoZLcCXWKkbol5Z">滇</span>滇东南环线 · 自驾路书</div>
+    <div class="daychips" id="daychips" data-page-node-id="SQ3gvsfub4Q6xQT1yeGRTE"></div>
+  </div>
+</nav>
+
+<header class="hero" data-page-node-id="qBvOMKwICFKiAJW09vvCGB">
+  <div class="wrap" data-page-node-id="Co8jK3Ve98kvKbPzBjz3g2">
+    <span class="tag" data-page-node-id="QLJCp3JltfwBg8EbFsZpBB">2026.09.30 — 10.07 · 8 天 · 纯电自驾 · 携宠友好</span>
+    <h1 data-page-node-id="1O3gIoPtyvvFp6MNENzz0X">云南滇东南环线<br data-page-node-id="ORTl8CUzmkoa0LxWVjmJMv">每日路线地图</h1>
+    <p class="sub" data-page-node-id="tyTc46WCdQ4VN2pJ3DIF4i">开自己的车，同伴从深圳坐顺风车到佛山会合后出发，穿越弥勒、普洱、景迈山、西双版纳，经南宁返程至广州番禺（同伴顺风车回深圳）。每天一条独立路线地图，当天要去的每个地点与路线均由高德地图规划。</p>
+    <div class="route-strip" id="routeStrip" data-page-node-id="mnBAKSckqY5tisftWlQMI8"></div>
+    <div class="stats" id="stats" data-page-node-id="nquxDRdYfSR8jYwvZVnUxS"></div>
+  </div>
+</header>
+
+<section class="overview" data-page-node-id="nAd7EX6rHzHwhGTKqxkuSK">
+  <div class="wrap" data-page-node-id="xid0ovdwNKzFquRbeuG7Ty">
+    <div class="ov-card" data-page-node-id="UzCVXb9hNwkHzbgPlVG7Am">
+      <div class="ov-head" data-page-node-id="tbmVJ9wh7dAzQJcDgHvlC9">
+        <h2 data-page-node-id="BFpf4iuzMQV79h4vMJlcvp">全程总览</h2>
+        <div class="hint" data-page-node-id="GXfBLCTwBl2NcamI29DyQE">灰色虚线为顺风车段，彩色实线为自驾长途段；下方每日地图展示当天各景点之间的具体路线</div>
+      </div>
+      <div id="mapOverview" data-page-node-id="MefPlb24yB0bEGEfKLTRdR"></div>
+      <div class="legend" id="legend" data-page-node-id="VkvfWKADLfDVRe5nu6VFQn"></div>
+    </div>
+  </div>
+</section>
+
+<section class="days" data-page-node-id="IKsc1V7x3CeZv3AALdWbz6">
+  <div class="wrap" data-page-node-id="JGzyu4fKZD5PQqR2OG68yG">
+    <h2 class="sec" data-page-node-id="3oImji1JSckwkwFgypkULO">每日路线地图</h2>
+    <p class="lead" data-page-node-id="20GVD4LylPICwPdWAc1wcR">每天独立一张地图，标注当天要去的地点与真实驾车路线（含市内景点串联）。里程、车程均来自高德地图。</p>
+    <div id="dayList" data-page-node-id="EvlcteDuWtPGpoBC05c8b5"></div>
+  </div>
+</section>
+
+<footer data-page-node-id="0Qvly6nHzqhKvBC9EwMIac">
+  <div class="wrap" data-page-node-id="BnR0xwaPKcdLvlZxFpg3fJ">
+    <div data-page-node-id="bgBsjLOHleHRr8Kaeqw6CH">滇东南环线 · 8 天自驾路书 · 路线数据由高德地图规划（GCJ-02 坐标系）</div>
+    <div class="disc" data-page-node-id="JlCi5qxO28N5GM5imcMKV6">说明：车程为理想路况估算，实际以当天路况为准。住宿与景点照片为 AI 生成的氛围示意图，仅供预览参考。</div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="routes_data.js"></script>
+<script>
+/* ============ 数据 ============ */
+const DATA = window.ROUTES_DATA;
+const PLACES = DATA.places;
+
+/* 每天的展示文案（stops 顺序与 DATA.days 严格一致，靠 id 对齐） */
+const DAYS = [
+  {
+    id:'d0', node:'0', date:'9月30日 · 周三', title:'同伴会合 · 连夜出发',
+    sub:'同伴深圳顺风车 → 佛山会合 → 开自己车连夜赴弥勒',
+    badges:[
+      {t:'佛山→弥勒 1235.6 km'},{t:'高德车程 13h23min',time:true},
+      {t:'充电 5 次',charge:true},{t:'总耗时约 18h',time:true},{t:'预计 10.1 14:00 到达',eta:true}
+    ],
+    items:[
+      {tm:'傍晚',tx:'同伴从深圳坐顺风车来佛山（约 118 km · 1h50min）'},
+      {tm:'20:00',tx:'佛山会合，开自己的车连夜出发（两人轮换）'},
+      {tm:'次日14:00',tx:'预计抵达弥勒，办理入住'}
+    ],
+    stay:{tag:'D0 住宿',name:'车上（连夜赶路）',addr:'两人轮换驾驶，服务区休息补电'},
+    note:'<b>集合说明：</b>全程开自己的车（非租车）。同伴从深圳坐顺风车到佛山会合，再从佛山出发。<b>补能：</b>沿途 5 次充电，建议提前标注充电桩。'
+  },
+  {
+    id:'d1', node:'1', date:'10月1日 · 周四', title:'弥勒 · 红砖小镇与夜温泉',
+    sub:'市内一日游',
+    badges:[{t:'东风韵门票 ¥80'},{t:'提前两天购票',time:true},{t:'湖泉温泉',charge:true}],
+    items:[
+      {tm:'下午',tx:'东风韵景区——红砖艺术建筑群，打卡标志性瓶形建筑'},
+      {tm:'18:30',tx:'马氏卤鸡，品尝当地特色晚餐'},
+      {tm:'20:00',tx:'半山温泉 / 湖泉温泉夜泡，放松解乏'}
+    ],
+    gallery:[
+      {img:'assets/dongfengyun.jpg',cap:'东风韵 · 红砖艺术小镇'},
+      {img:'assets/mile-hotel.jpg',cap:'和也朴舍 · 温泉民宿'}
+    ],
+    stay:{tag:'D1 住宿',name:'和也朴舍 · 温泉民宿',addr:'云南弥勒市弥阳街道广昆高速与熙和南路交口往北100米租舍村6号',img:'assets/mile-hotel.jpg'},
+    note:'<b>购票提醒：</b>东风韵门票 ¥80，需提前两天购买。'
+  },
+  {
+    id:'d2', node:'2', date:'10月2日 · 周五', title:'普洱 · 茶香与老街',
+    sub:'弥勒 → 普洱市区',
+    badges:[
+      {t:'弥勒→普洱 445 km'},{t:'高德车程 5h56min',time:true},
+      {t:'充电 2 次',charge:true},{t:'7:00 出发 · 约13:00 到达',eta:true}
+    ],
+    items:[
+      {tm:'07:00',tx:'弥勒出发，沿昆磨高速南下'},
+      {tm:'13:00',tx:'抵达普洱市区，午餐'},
+      {tm:'下午',tx:'戴家巷行署大院 → 思茅老街 → 五一农贸市场'}
+    ],
+    gallery:[{img:'assets/puer-hotel.jpg',cap:'普洱市区 · 温馨民宿'}],
+    stay:{tag:'D2 住宿',name:'普洱市区民宿',addr:'云南普洱市思茅区一号路（创悦汽车装饰东南20米）',img:'assets/puer-hotel.jpg'},
+    note:'<b>携宠提醒：</b>带宠物入住需提前联系酒店，加收 ¥20。'
+  },
+  {
+    id:'d3', node:'3', date:'10月3日 · 周六', title:'景迈山 · 千年古茶园',
+    sub:'普洱 → 景迈山翁基古寨',
+    badges:[
+      {t:'普洱→景迈山 214.1 km'},{t:'高德车程 3h39min',time:true},
+      {t:'充电 1 次',charge:true},{t:'9:00 出发 · 约12:40 到达',eta:true}
+    ],
+    items:[
+      {tm:'09:00',tx:'普洱出发，前往澜沧方向'},
+      {tm:'12:40',tx:'抵达景迈山，入住翁基古寨'},
+      {tm:'下午',tx:'糯干古寨（约 9.5 km · 22 min）'},
+      {tm:'傍晚',tx:'芒洪观落日，随后逛翁基古寨'}
+    ],
+    gallery:[
+      {img:'assets/jingmaishan-tea.jpg',cap:'景迈山 · 千年古茶园'},
+      {img:'assets/jingmaishan-village.jpg',cap:'翁基古寨 · 布朗族木楼'}
+    ],
+    stay:{tag:'D3 住宿',name:'翁基古寨民宿',addr:'云南澜沧县惠民镇芒景村112号',img:'assets/jingmaishan-village.jpg'},
+    note:'<b>山路提醒：</b>景迈山为盘山公路，注意车速与充电余量（进山前补足电量）。'
+  },
+  {
+    id:'d4', node:'4', date:'10月4日 · 周日', title:'西双版纳 · 告庄星光夜市',
+    sub:'景迈山 → 西双版纳',
+    badges:[
+      {t:'景迈山→版纳 149.6 km'},{t:'高德车程 3h20min',time:true},
+      {t:'15:00 出发 · 约18:20 到达',eta:true}
+    ],
+    items:[
+      {tm:'上午',tx:'翁基逛吃，景迈山吃早饭'},
+      {tm:'15:00',tx:'出发前往西双版纳（景洪）'},
+      {tm:'晚上',tx:'星光夜市 → 告庄西双景 → 水上市场 → 景洪大金塔寺'}
+    ],
+    gallery:[
+      {img:'assets/xishuangbanna-night.jpg',cap:'告庄西双景 · 星光夜市'},
+      {img:'assets/xishuangbanna-hotel.jpg',cap:'告庄西双景 · 傣式客栈'}
+    ],
+    stay:{tag:'D4 住宿',name:'告庄西双景客栈',addr:'云南景洪市告庄西双景景兰寨9幢',img:'assets/xishuangbanna-hotel.jpg'},
+    note:'<b>夜市提醒：</b>星光夜市人多，注意保管财物；客栈在景区内，车辆停放提前与客栈确认。'
+  },
+  {
+    id:'d5', node:'5', date:'10月5日 · 周一', title:'西双版纳 · 佛寺与村寨',
+    sub:'市内一日游 + 夜间出发返程',
+    badges:[{t:'市内串联约 31.6 km'},{t:'晚饭后出发返程',time:true}],
+    items:[
+      {tm:'白天',tx:'泼水广场 → 般若寺 → 总佛寺 → 曼贺纳自然村寨'},
+      {tm:'晚饭后',tx:'出发返程，连夜赶往南宁'}
+    ],
+    gallery:[{img:'assets/xishuangbanna-night.jpg',cap:'西双版纳 · 城市风貌'}],
+    stay:{tag:'D5 住宿',name:'车上（连夜返程）',addr:'晚饭后出发，次日 13:00 抵南宁'},
+    note:'<b>备选方案：</b>如时间充裕，可直接西双版纳→佛山（约 1722 km / 19h / 充电 7 次 / 约 26h）。'
+  },
+  {
+    id:'d6', node:'6', date:'10月6日 · 周二', title:'返程 · 南宁休整',
+    sub:'西双版纳 → 南宁（连夜返程抵达）',
+    badges:[
+      {t:'版纳→南宁 1189.6 km'},{t:'高德车程 13h47min',time:true},
+      {t:'充电 4-5 次',charge:true},{t:'预计 13:00 到达',eta:true}
+    ],
+    items:[
+      {tm:'前夜',tx:'西双版纳晚饭后出发，连夜赶路'},
+      {tm:'13:00',tx:'抵达南宁，办理入住，休整补电'},
+      {tm:'傍晚',tx:'市区自由活动，品尝南宁美食'}
+    ],
+    gallery:[{img:'assets/nanning-hotel.jpg',cap:'南宁 · 南国大厦公寓'}],
+    stay:{tag:'D6 住宿',name:'南国大厦公寓酒店',addr:'广西南宁市青秀区竹溪大道8号南国大厦A座',img:'assets/nanning-hotel.jpg'},
+    note:'<b>补电提醒：</b>返程前充满电，为次日长途做准备。'
+  },
+  {
+    id:'d7', node:'7', date:'10月7日 · 周三', title:'返程 · 南宁至广州番禺',
+    sub:'南宁 → 广州番禺（同伴顺风车回深圳）',
+    badges:[
+      {t:'南宁→番禺 579.5 km'},{t:'高德车程 6h11min',time:true},
+      {t:'充电 2 次',charge:true},{t:'9:00 出发 · 约16:00 到达',eta:true}
+    ],
+    items:[
+      {tm:'09:00',tx:'南宁出发，沿广昆高速东行'},
+      {tm:'16:00',tx:'抵达广州番禺，放下同行同伴'},
+      {tm:'傍晚',tx:'同伴从番禺顺风车回深圳（约 81.6 km · 1h17min）'}
+    ],
+    stay:{tag:'D7 终点',name:'广州番禺（行程结束）',addr:'番禺放下同伴后，各自回家'},
+    note:'<b>返程说明：</b>返程终点为广州番禺，同行同伴在此下车顺风车回深圳。'
+  }
+];
+
+/* 每天地图 stop 的角色标注（与 DATA.days[].stops 对齐） */
+const STOP_LABEL = {
+  shenzhen:'同伴起点', foshan:'会合点', mile_hotel:'住宿', dongfengyun:'景点', mashi:'晚餐',
+  quan:'温泉', puer_hotel:'住宿', daijiaxiang:'景点', simao_street:'老街', wuyi_market:'市场',
+  wengji:'古寨住宿', nuogan:'古寨', manghong:'观景台', gaozhuang_hotel:'客栈',
+  starlight_market:'夜市', water_market:'水上市场', dagold_temple:'大金塔寺',
+  poshui:'广场', bore_temple:'般若寺', zongfo_temple:'总佛寺', manhena:'村寨',
+  nanning:'住宿', panyu:'终点'
+};
+
+const COLOR = { shuttle:'#9aa0a6', long:'#e8590c', sight:'#12b886' };
+const KIND_LABEL = { shuttle:'顺风车', long:'自驾', sight:'市内' };
+
+/* ============ 工具 ============ */
+function fmtKm(km){ return km>=100 ? km.toFixed(1) : km; }
+function fmtDur(min){
+  const h = Math.floor(min/60), m = min%60;
+  return h>0 ? `${h}h${m?m+'min':''}` : `${m}min`;
+}
+function makeIcon(text, bg, opts){
+  opts = opts || {};
+  const size = opts.big ? 32 : 26;
+  return L.divIcon({
+    className:'', iconSize:[size,size], iconAnchor:[size/2,size/2],
+    html:`<div class="pin ${opts.big?'big':''} ${opts.sq?'sq':''}" style="background:${bg}">${text}</div>`
+  });
+}
+
+/* ============ Hero ============ */
+const strip = [
+  {n:'深圳（同伴）',soft:true},{n:'佛山会合',soft:false},{n:'弥勒',soft:false},{n:'普洱',soft:false},
+  {n:'景迈山',soft:false},{n:'西双版纳',soft:false},{n:'南宁',soft:false},{n:'广州番禺',soft:false},{n:'深圳（同伴）',soft:true}
+];
+document.getElementById('routeStrip').innerHTML = strip.map((s,i)=>
+  `${i>0?'<span class="arr">→</span>':''}<span class="stop ${s.soft?'soft':''}">${s.n}</span>`
+).join('');
+
+/* 统计：长途自驾里程累加 */
+let driveKm = 0, sightKm = 0, shuttleKm = 0;
+DATA.days.forEach(d=>d.segments.forEach(s=>{
+  if(s.kind==='shuttle') shuttleKm += s.distance_km;
+  else if(s.kind==='long') driveKm += s.distance_km;
+  else sightKm += s.distance_km;
+}));
+document.getElementById('stats').innerHTML = `
+  <div class="stat"><div class="num">${Math.round(driveKm)}<small>km</small></div><div class="lbl">自驾总里程（高德实测）</div></div>
+  <div class="stat"><div class="num">8<small>天</small></div><div class="lbl">行程时长</div></div>
+  <div class="stat"><div class="num">15<small>次</small></div><div class="lbl">预计充电次数</div></div>
+  <div class="stat"><div class="num">${DATA.days.length}<small>张</small></div><div class="lbl">每日路线地图</div></div>
+`;
+
+/* ============ 顶部日期导航 ============ */
+document.getElementById('daychips').innerHTML =
+  `<button class="chip" data-target="overview">总览</button>` +
+  DAYS.map(d=>`<button class="chip" data-target="${d.id}">${d.date.split(' ')[0]}</button>`).join('');
+
+/* ============ 渲染每天 ============ */
+const dayListEl = document.getElementById('dayList');
+dayListEl.innerHTML = DAYS.map(d=>{
+  const dd = DATA.days.find(x=>x.id===d.id);
+  if(!dd) return '';
+  const segs = dd.segments;
+
+  // 当天各类型里程
+  let longKm=0, sightKm2=0, shKm=0;
+  segs.forEach(s=>{ if(s.kind==='long')longKm+=s.distance_km; else if(s.kind==='sight')sightKm2+=s.distance_km; else shKm+=s.distance_km; });
+
+  const totals = [];
+  if(longKm) totals.push(`<span class="tot-badge drive">自驾长途 <b>${fmtKm(longKm)} km</b></span>`);
+  if(sightKm2) totals.push(`<span class="tot-badge sight">市内游玩 <b>${fmtKm(sightKm2)} km</b></span>`);
+  if(shKm) totals.push(`<span class="tot-badge shuttle">顺风车 <b>${fmtKm(shKm)} km</b></span>`);
+
+  // 地点清单
+  const stopsHtml = dd.stops.map((k,i)=>{
+    const name = PLACES[k] ? PLACES[k].name : k;
+    const role = STOP_LABEL[k] || '';
+    const isFirst = i===0, isLast = i===dd.stops.length-1;
+    let bg = '#5d5344';
+    if(isFirst) bg = '#2e7d5b';
+    else if(isLast && dd.stops[0]===k) bg = '#3355d4';
+    else if(isLast) bg = '#e8590c';
+    const numTxt = isFirst ? '起' : (isLast ? (dd.stops[0]===k?'宿':'终') : String(i));
+    const seg = segs[i];
+    const leg = seg ? `
+      <div class="leg">
+        <span class="sw ${seg.kind==='shuttle'?'dash':''}" style="background:${COLOR[seg.kind]}"></span>
+        ${KIND_LABEL[seg.kind]} <b>${fmtKm(seg.distance_km)} km · ${fmtDur(seg.duration_min)}</b>
+      </div>` : '';
+    return `<div class="stop-row">
+      <div class="dot" style="background:${bg}">${numTxt}</div>
+      <div class="info">
+        <div class="nm">${name}${role?` <span style="color:var(--muted);font-weight:400;font-size:12.5px">${role}</span>`:''}</div>
+      </div>
+      ${leg}
+    </div>`;
+  }).join('');
+
+  const badges = (d.badges||[]).map(b=>
+    `<span class="badge ${b.charge?'charge':''} ${b.time?'time':''} ${b.eta?'eta':''}"><b>${b.t}</b></span>`
+  ).join('');
+  const items = (d.items||[]).map(it=>
+    `<div class="item"><div class="tm">${it.tm}</div><div class="ic">·</div><div class="tx">${it.tx}</div></div>`
+  ).join('');
+  const gallery = d.gallery ? `<div class="gallery">` + d.gallery.map(g=>
+    `<div class="photo"><img src="${g.img}" alt="${g.cap}" loading="lazy"><div class="cap">${g.cap}</div></div>`
+  ).join('') + `</div>` : '';
+
+  let stay = '';
+  if(d.stay){
+    const img = d.stay.img ? `<div class="stay-photo"><img src="${d.stay.img}" alt="${d.stay.name}" loading="lazy"></div>` : '';
+    const info = `<div class="stay-info">
+      <div class="tag">${d.stay.tag}</div>
+      <h4>${d.stay.name}</h4>
+      <div class="addr">${d.stay.addr}</div>
+    </div>`;
+    stay = `<div class="stay">${d.stay.img?`<div class="stay-grid">${img}${info}</div>`:info}</div>`;
+  }
+
+  return `<div class="day-sec" id="${d.id}">
+    <div class="day-card">
+      <div class="dhead">
+        <div class="left">
+          <div class="date">${d.date}</div>
+          <h3>${d.title}</h3>
+          <div class="route-txt">${d.sub}</div>
+        </div>
+        <div class="totals">${totals.join('')}</div>
+      </div>
+      <div class="day-map" id="map-${d.id}"></div>
+      <div class="dbody">
+        <div class="stops">${stopsHtml}</div>
+        <div class="badges">${badges}</div>
+        <div class="items">${items}</div>
+        ${gallery}
+        ${stay}
+        ${d.note?`<div class="note">${d.note}</div>`:''}
+      </div>
+    </div>
+  </div>`;
+}).join('');
+
+/* ============ 初始化地图 ============ */
+const BASE_TILE = 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}';
+function tileLayer(){ return L.tileLayer(BASE_TILE,{subdomains:['1','2','3','4'],maxZoom:18,attribution:'&copy; 高德地图'}); }
+
+function drawSeg(map, seg){
+  return L.polyline(seg.points,{
+    color:COLOR[seg.kind], weight:4, opacity:0.85,
+    dashArray:seg.kind==='shuttle'?'8 8':null, lineCap:'round', lineJoin:'round'
+  }).addTo(map);
+}
+
+/* 每日地图 */
+const dayMaps = {};
+DATA.days.forEach(dd=>{
+  const el = document.getElementById('map-'+dd.id);
+  if(!el) return;
+  const map = L.map('map-'+dd.id,{preferCanvas:true,scrollWheelZoom:false}).setView([23.5,104],6);
+  tileLayer().addTo(map);
+  // 路线
+  dd.segments.forEach(s=>drawSeg(map, s));
+  // 地点 marker
+  let bounds = L.latLngBounds([]);
+  dd.stops.forEach((k,i)=>{
+    const p = PLACES[k];
+    if(!p) return;
+    const isFirst = i===0, isLast = i===dd.stops.length-1;
+    let bg = '#5d5344', txt = String(i);
+    if(isFirst){ bg='#2e7d5b'; txt='起'; }
+    else if(isLast && dd.stops[0]===k){ bg='#3355d4'; txt='宿'; }
+    else if(isLast){ bg='#e8590c'; txt='终'; }
+    const icon = makeIcon(txt, bg, {big:(isFirst||isLast)});
+    L.marker([p.lat,p.lng],{icon}).addTo(map).bindPopup(`<b>${p.name}</b><br>${STOP_LABEL[k]||''}`);
+    bounds.extend([p.lat,p.lng]);
+  });
+  dd.segments.forEach(s=>{ if(s.points.length) bounds.extend(s.points); });
+  if(bounds.isValid()) map.fitBounds(bounds.pad(0.18));
+  dayMaps[dd.id] = map;
+});
+
+/* 总览地图：全部长途 + 顺风车段 + 主节点 */
+const ovMap = L.map('mapOverview',{preferCanvas:true,scrollWheelZoom:false}).setView([23.5,107],6);
+tileLayer().addTo(ovMap);
+const mainKeys = ['shenzhen','foshan','mile_hotel','puer_hotel','wengji','gaozhuang_hotel','nanning','panyu'];
+const mainMeta = {shenzhen:'同伴起点',foshan:'会合点',mile_hotel:'弥勒',puer_hotel:'普洱',wengji:'景迈山',gaozhuang_hotel:'西双版纳',nanning:'南宁',panyu:'广州番禺'};
+const mainColor = {shenzhen:'#5c7cfa',foshan:'#495057',mile_hotel:'#e8590c',puer_hotel:'#74b816',wengji:'#2b8a3e',gaozhuang_hotel:'#1098ad',nanning:'#5c7cfa',panyu:'#7048e8'};
+let ovBounds = L.latLngBounds([]);
+// 长途/顺风车路线
+DATA.days.forEach(dd=>dd.segments.forEach(s=>{
+  if(s.kind==='long' || s.kind==='shuttle'){ drawSeg(ovMap, s); if(s.points.length) ovBounds.extend(s.points); }
+}));
+// 主节点
+mainKeys.forEach(k=>{
+  const p = PLACES[k]; if(!p) return;
+  const isEnd = (k==='shenzhen' || k==='panyu');
+  const icon = makeIcon(isEnd?(k==='shenzhen'?'起':'终'):mainMeta[k], mainColor[k], {big:isEnd});
+  L.marker([p.lat,p.lng],{icon}).addTo(ovMap).bindPopup(`<b>${p.name}</b><br>${mainMeta[k]}`);
+  ovBounds.extend([p.lat,p.lng]);
+});
+if(ovBounds.isValid()) ovMap.fitBounds(ovBounds.pad(0.08));
+
+document.getElementById('legend').innerHTML = [
+  {c:'#e8590c', l:'自驾长途段'},
+  {c:'#12b886', l:'市内游玩段'},
+  {c:'#9aa0a6', l:'顺风车段', dash:true}
+].map(x=>`<div class="item"><span class="sw ${x.dash?'dash':''}" style="background:${x.c}"></span>${x.l}</div>`).join('');
+
+/* ============ 导航交互 ============ */
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    const t = c.dataset.target;
+    if(t==='overview'){ document.querySelector('.overview').scrollIntoView({behavior:'smooth',block:'start'}); }
+    else { document.getElementById(t).scrollIntoView({behavior:'smooth',block:'start'}); }
+  });
+});
+
+/* 滚动到某天时自动刷新地图尺寸 */
+if(typeof ResizeObserver !== 'undefined'){
+  const ro = new ResizeObserver(()=>{ Object.values(dayMaps).forEach(m=>m.invalidateSize()); ovMap.invalidateSize(); });
+  document.querySelectorAll('.day-map,#mapOverview').forEach(el=>ro.observe(el));
+}
+setTimeout(()=>{ Object.values(dayMaps).forEach(m=>m.invalidateSize()); ovMap.invalidateSize(); }, 300);
+</script>
+</body>
+</html>
